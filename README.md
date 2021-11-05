@@ -7,4 +7,4 @@ Build Red Hat / CentOS .rpm packages (using GitHub Actions) and upload to Packag
 
 ## Repository
 
-The artifacts from this project are uploaded as samples in the following Package Cloud repository: [irpms](https://packagecloud.io/geldtech/debs)
+The artifacts from this project are uploaded as samples in the following Package Cloud repository: [rpms](https://packagecloud.io/geldtech/debs)
