@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distrib: [el/7, el/8, rpm_any]
+        distrib: [el/7, el/8, rpm_any/rpm_any]
     steps:
       - uses: actions/checkout@v2
 
