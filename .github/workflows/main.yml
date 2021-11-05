@@ -17,7 +17,7 @@ env:
   VERSION: 0.1
   ARCH: noarch
   AUTHOR: zlig
-  DESCRIPTION: "Sample RPM package built with GitHub Actions"
+  DESCRIPTION: "Sample RPM package built with GitHub Actions and uploaded to PackageCloud"
   REPO_NAME: rpms
   DISTRIBUTION: el/8
 
@@ -37,23 +37,30 @@ jobs:
           echo "BUILD_DATE=$(date '+%Y%m%d')"                                           >> $GITHUB_ENV
           echo "ARTIFACT_NAME=$PACKAGE_NAME-$VERSION.$GITHUB_RUN_NUMBER_$ARCH.deb"      >> $GITHUB_ENV
 
-      - name: Replace version and build number with the Debian control file
+      - name: Replace version and build number with the RPM .spec file
         run: |
-          sed -i "s/__VERSION__/$BUILD_VERSION/g" $PACKAGE_NAME/DEBIAN/control
-          sed -i "s/__DATE__/$BUILD_DATE/g" $PACKAGE_NAME/DEBIAN/control
+          sed -i "s/__NAME__/$PACKAGE_NAME/g" $PACKAGE_NAME/*.spec
+          sed -i "s/__DESC__/$DESCRIPTION/g" $PACKAGE_NAME/*.spec
+          sed -i "s/__LICENSE__/$LICENSE/g" $PACKAGE_NAME/*.spec
+          sed -i "s/__SOFTWARE_VERSION__/$VERSION/g" $PACKAGE_NAME/*.spec
+          sed -i "s/__RELEASE_VERSION__/$GITHUB_RUN_NUMBER/g" $PACKAGE_NAME/*.spec
+          sed -i "s/__DATE__/$BUILD_DATE/g" $PACKAGE_NAME/*.spec
 
       - name: Build the RPM package
         run: |
-          echo "Not yet implemented!" 
-          exit 1
+          cd $PACKAGE_NAME
+          mkdir -p ./{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          cp -r files/ BUILD
+          rpmbuild -v -bb --target $ARCH --define "_topdir `pwd`" --define "package_files `pwd`/BUILD/files" rpm.spec
+          cd ..
 
       - name: Output detail on the resulting package for debugging purpose
         run: |
-          ls -l $ARTIFACT_NAME
-          dpkg --contents $ARTIFACT_NAME
-          md5sum $ARTIFACT_NAME
-          sha256sum $ARTIFACT_NAME
-          export LOCAL_SHA256=$( sha256sum $ARTIFACT_NAME | cut -d " " -f1 )
+          ls -l $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
+          rpm -qlpv $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
+          md5sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
+          sha256sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
+          export LOCAL_SHA256=$( sha256sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME | cut -d " " -f1 )
 
       - name: Upload artifacts to share data between jobs
         uses: actions/upload-artifact@v2
@@ -70,48 +77,3 @@ jobs:
           packagecloud-distrib: ${{ env.DISTRIBUTION }}
           packagecloud-token: ${{ secrets.PACKAGECLOUD_TOKEN }}
 
-
-  build_centos:
-    # GitHub Actions does not currently support CentOS as an official platform, so in order to
-    # test on this OS we need to run it as a container based on the Ubuntu environment
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        container: ["centos:7"]
-
-    container:
-      image: ${{ matrix.container }}
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Install make and sudo
-        run: |
-          yum update -y
-          yum install -y sudo
-          yum groupinstall -y "Development Tools"
-          yum install -y  gtk3 libXext libXrender libXtst libX11 libXau libXcursor libXdmcp libXfixes libXi libXmu libXp libXpm libXt
-      - name: Install requirements
-        run: |
-          make deps
-          make venv
-          . venv/bin/activate
-          export PATH=`npm bin`:$PATH
-          make pythondeps
-          python -c "import setuptools; print(setuptools.__version__)"
-          pip --version
-      - name: Install Firefox
-        run: |
-          cd /usr/local
-          curl -O http://ftp.mozilla.org/pub/firefox/releases/75.0/linux-x86_64/en-US/firefox-75.0.tar.bz2
-          tar xvjf firefox-75.0.tar.bz2
-          sudo ln -s /usr/local/firefox/firefox /usr/bin/firefox
-      - name: Install Simphony-Remote
-        run: |
-          . venv/bin/activate
-          make install
-      - name: Install development requirements
-        run: |
-          . venv/bin/activate
-          make devdeps
