@@ -1,0 +1,68 @@
+##############################################################################################
+#
+# GitHub Actions configuration file
+# 
+# Set the required secrets in the build settings of the project:
+#   - PACKAGECLOUD_USER
+#   - PACKAGECLOUD_KEY
+#
+##############################################################################################
+name: build
+
+on: [pull_request, push]
+
+env:
+  PACKAGE_NAME: rpm-builder-packagecloud
+  LICENSE: LGPL-2.1
+  VERSION: 0.1
+  ARCH: noarch
+  AUTHOR: zlig
+  DESCRIPTION: "Sample RPM package built with GitHub Actions"
+  REPO_NAME: rpms
+  DISTRIBUTION: el/8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Export variables containing versions and filename
+        run: |
+          echo "RELEASE_VERSION=$VERSION"                                               >> $GITHUB_ENV
+          echo "BUILD_VERSION=$VERSION.$GITHUB_RUN_NUMBER"                              >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date '+%Y%m%d')"                                           >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=$PACKAGE_NAME-$VERSION.$GITHUB_RUN_NUMBER_$ARCH.deb"      >> $GITHUB_ENV
+
+      - name: Replace version and build number with the Debian control file
+        run: |
+          sed -i "s/__VERSION__/$BUILD_VERSION/g" $PACKAGE_NAME/DEBIAN/control
+          sed -i "s/__DATE__/$BUILD_DATE/g" $PACKAGE_NAME/DEBIAN/control
+
+      - name: Build the RPM package
+        run: |
+          echo "Not yet implemented!" 
+          exit 1
+
+      - name: Output detail on the resulting package for debugging purpose
+        run: |
+          ls -l $ARTIFACT_NAME
+          dpkg --contents $ARTIFACT_NAME
+          md5sum $ARTIFACT_NAME
+          sha256sum $ARTIFACT_NAME
+          export LOCAL_SHA256=$( sha256sum $ARTIFACT_NAME | cut -d " " -f1 )
+
+      - name: Upload artifacts to share data between jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          path: "*.rpm"
+
+      - name: Upload package PackageCloud.io
+        uses: danielmundi/upload-packagecloud@v1
+        with:
+          package-name: ${{ env.ARTIFACT_NAME }}
+          packagecloud-username: ${{ secrets.PACKAGECLOUD_USER }}
+          packagecloud-repo: ${{ env.REPO_NAME }}
+          packagecloud-distrib: ${{ env.DISTRIBUTION }}
+          packagecloud-token: ${{ secrets.PACKAGECLOUD_TOKEN }}
