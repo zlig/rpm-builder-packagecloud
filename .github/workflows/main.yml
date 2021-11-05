@@ -57,11 +57,11 @@ jobs:
 
       - name: Output detail on the resulting package for debugging purpose
         run: |
-          ls -l $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
-          rpm -qlpv $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
-          md5sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
-          sha256sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
-          export LOCAL_SHA256=$( sha256sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME | cut -d " " -f1 )
+          ls -l $ARTIFACT_NAME
+          rpm -qlpv $ARTIFACT_NAME
+          md5sum $ARTIFACT_NAME
+          sha256sum $ARTIFACT_NAME
+          export LOCAL_SHA256=$( sha256sum $ARTIFACT_NAME | cut -d " " -f1 )
 
       - name: Upload artifacts to share data between jobs
         uses: actions/upload-artifact@v2
