@@ -53,6 +53,7 @@ jobs:
           cp -r files/ BUILD
           rpmbuild -v -bb --target $ARCH --define "_topdir `pwd`" --define "package_files `pwd`/BUILD/files" rpm.spec
           cd ..
+          mv $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME $ARTIFACT_NAME
 
       - name: Output detail on the resulting package for debugging purpose
         run: |
