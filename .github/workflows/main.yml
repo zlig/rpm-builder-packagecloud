@@ -56,6 +56,9 @@ jobs:
 
       - name: Output detail on the resulting package for debugging purpose
         run: |
+          pwd
+          ls -lRsth 
+          find . -type f -name $ARTIFACT_NAME
           ls -l $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
           rpm -qlpv $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
           md5sum $PACKAGE_NAME/RPMS/$ARCH/$ARTIFACT_NAME
