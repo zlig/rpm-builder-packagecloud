@@ -19,14 +19,13 @@ env:
   AUTHOR: zlig
   DESCRIPTION: "Sample RPM package built with GitHub Actions and uploaded to PackageCloud"
   REPO_NAME: rpms
-  DISTRIBUTION: el/8
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distrib: [el/7, el/8, centos/7, centos/8]
+        distrib: [el/7, el/8, rpm_any]
     steps:
       - uses: actions/checkout@v2
 
@@ -78,6 +77,6 @@ jobs:
           package-name: ${{ env.ARTIFACT_NAME }}
           packagecloud-username: ${{ secrets.PACKAGECLOUD_USER }}
           packagecloud-repo: ${{ env.REPO_NAME }}
-          packagecloud-distrib: ${{ matrix.distrib }}
+          packagecloud-distrib: ${{ matrix.DISTRIB }}
           packagecloud-token: ${{ secrets.PACKAGECLOUD_TOKEN }}
 
